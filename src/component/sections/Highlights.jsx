@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 const ITEMS = [
-    { name: "Chicken Burger", price: "€5.50", image: "/public/chicken-burger.jpeg", description: "Filet de poulet pané maison, bacon ,salade, cornichon, cheddar" },
-    { name: "Chicken Pizza", price: "€6.00", image: "/public/chicken-pizza.jpg",  description: "Sauce tomate, fromage, poulet, pomme de terre, oignons, oeuf, olives" },
-    { name: "Tacos", price: "€6.50", image: "/public/tacos.png", description: "Tortilla garnie de viande, de fromage, de frites et de sauces savoureuses. " },
-    { name: "Sandwich Tandoori", price: "€6.50", image: "/public/sandwich-tandoori.jpg", description: "Lest, eos quatia quiam lab ipsapietur as remolupta volupta s. Ut aut" },
-    { name: "Chicken Wings", price: "€6.50", image: "/public/wings.jpg", description: "Lest, eos quatia quiam lab ipsapietur as remolupta volupta s. Ut aut" },
-    { name: "Bowl Tenders", price: "€8.50", image: "/public/bowl-tenders.jpeg", description: "morceaux de poulet croustillants et dorés, accompagnés de frites fondantes, et d’une sauce savoureuse." },
+    { name: "Chicken Burger", price: "€5.50", image: "chicken-burger.jpeg", description: "Filet de poulet pané maison, bacon ,salade, cornichon, cheddar" },
+    { name: "Chicken Pizza", price: "€6.00", image: "chicken-pizza.jpg",  description: "Sauce tomate, fromage, poulet, pomme de terre, oignons, oeuf, olives" },
+    { name: "Tacos", price: "€6.50", image: "tacos.png", description: "Tortilla garnie de viande, de fromage, de frites et de sauces savoureuses. " },
+    { name: "Sandwich Tandoori", price: "€6.50", image: "sandwich-tandoori.jpg", description: "Lest, eos quatia quiam lab ipsapietur as remolupta volupta s. Ut aut" },
+    { name: "Chicken Wings", price: "€6.50", image: "wings.jpg", description: "Lest, eos quatia quiam lab ipsapietur as remolupta volupta s. Ut aut" },
+    { name: "Bowl Tenders", price: "€8.50", image: "bowl-tenders.jpeg", description: "morceaux de poulet croustillants et dorés, accompagnés de frites fondantes, et d’une sauce savoureuse." },
 ];
 
 function useVisibleCount() {
@@ -55,8 +55,6 @@ function MenuCard({ item }) {
                     {item.price}
                 </button>
             </div>
-
-            {/* Round dish photo overlapping the top of the card */}
             <div className="absolute left-0 -top-25 aspect-square w-full overflow-hidden rounded-full bg-white shadow-[0_6px_18px_rgba(0,0,0,0.12)]">
                 {item.image ? (
                     <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
@@ -92,8 +90,6 @@ export default function Highlights({ items = ITEMS, title = "Menu Highlights" })
                     </h2>
                     <span className="h-[3px] flex-1 bg-gradient-to-l from-transparent to-black" aria-hidden="true" />
                 </div>
-
-                {/* Carousel */}
                 <div className="relative mt-14 flex items-center gap-3 sm:gap-5">
                     <div className="absolute inset-y-0 left-0 z-10 flex items-center">
                         <ArrowButton direction="left" onClick={prev} />

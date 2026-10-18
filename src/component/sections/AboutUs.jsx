@@ -13,7 +13,7 @@ const STORY = {
 const CHEFS_INTRO = "Meet the team behind your favourite dishes.";
 const CHEFS = [
     { name: "John Doe", image: "/chef-1.jpg", rating: 5 },
-    { name: "James Smith", image: "/chef-2.jpg", rating: 5 },
+    { name: "James Smith", image: "/chef-2.jpeg", rating: 5 },
     { name: "James Vane", image: "/chef-3.avif", rating: 5 },
 ];
 
