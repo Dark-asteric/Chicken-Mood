@@ -1,11 +1,17 @@
-import Navbar from '../Navbar/Navbar'
-import HeroSection from '../sections/HeroSection'
+import AboutUs from "../sections/AboutUs"
+import CustomerReviews from "../sections/CustomerReviews"
+import FoodItems from "../sections/FoodItems"
+import HeroSection from "../sections/HeroSection"
+import Highlights from "../sections/Highlights"
 
 const Home = () => {
   return (
     <>
-        <Navbar/>
-        <HeroSection/>
+        <HeroSection />
+        <Highlights />
+        <AboutUs/>
+        <FoodItems/>
+        <CustomerReviews/>
     </>
   )
 }

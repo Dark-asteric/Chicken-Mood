@@ -1,18 +1,11 @@
 import { useEffect, useState } from "react";
-
-/*
-  Fonts (add once, e.g. in index.html or your main CSS):
-  @import url("https://fonts.googleapis.com/css2?family=Philosopher&family=Roboto:wght@400;500&display=swap");
-
-  Set `image` on each item to your own photo URL. Without it, a plate placeholder is shown.
-*/
 const ITEMS = [
-    { name: "Herb Chicken", price: "$00.0", image: "", emoji: "🍗", description: "Lest, eos quatia quiam lab ipsapietur as remolupta volupta s. Ut aut" },
-    { name: "Butter Shrimp", price: "$00.0", image: "", emoji: "🍕", description: "Lest, eos quatia quiam lab ipsapietur as remolupta volupta t aut" },
-    { name: "BBQ Beef Ribs", price: "$00.0", image: "", emoji: "🥝", description: "Lest, eos quatia quiam lab ipsapietur as remolupta volupta s. Ut autVivei" },
-    { name: "Margherita", price: "$00.0", image: "", emoji: "🍝", description: "Lest, eos quatia quiam lab ipsapietur as remolupta vlupta s. Ut aut" },
-    { name: "Garlic Prawns", price: "$00.0", image: "", emoji: "🍤", description: "Lest, eos quatia quiam lab ipsapietur as remolupta volupta s. Ut aut" },
-    { name: "Caesar Salad", price: "$00.0", image: "", emoji: "🥗", description: "Lest, eos quatia quiam lab ipsapietur as remolupta volupta s. Ut aut" },
+    { name: "Chicken Burger", price: "€5.50", image: "/public/chicken-burger.jpeg", description: "Filet de poulet pané maison, bacon ,salade, cornichon, cheddar" },
+    { name: "Chicken Pizza", price: "€6.00", image: "/public/chicken-pizza.jpg",  description: "Sauce tomate, fromage, poulet, pomme de terre, oignons, oeuf, olives" },
+    { name: "Tacos", price: "€6.50", image: "/public/tacos.png", description: "Tortilla garnie de viande, de fromage, de frites et de sauces savoureuses. " },
+    { name: "Sandwich Tandoori", price: "€6.50", image: "/public/sandwich-tandoori.jpg", description: "Lest, eos quatia quiam lab ipsapietur as remolupta volupta s. Ut aut" },
+    { name: "Chicken Wings", price: "€6.50", image: "/public/wings.jpg", description: "Lest, eos quatia quiam lab ipsapietur as remolupta volupta s. Ut aut" },
+    { name: "Bowl Tenders", price: "€8.50", image: "/public/bowl-tenders.jpeg", description: "morceaux de poulet croustillants et dorés, accompagnés de frites fondantes, et d’une sauce savoureuse." },
 ];
 
 function useVisibleCount() {
@@ -48,7 +41,7 @@ function MenuCard({ item }) {
         <article className="relative pt-0">
             {/* Card body */}
             <div className="mt-[calc(50%)] flex flex-col items-center rounded-3xl bg-[#e0dfdb] px-6 pb-10 pt-[calc(50%+2rem)] text-center">
-                <h3 className="text-[1.1rem] font-medium text-neutral-900" style={{ fontFamily: "Roboto, sans-serif" }}>
+                <h3 className="text-[1.1rem] font-bold text-neutral-900" style={{ fontFamily: "Roboto, sans-serif" }}>
                     {item.name}
                 </h3>
                 <p className="mt-5 text-[0.9rem] leading-6 text-neutral-700" style={{ fontFamily: "Roboto, sans-serif" }}>
@@ -64,7 +57,7 @@ function MenuCard({ item }) {
             </div>
 
             {/* Round dish photo overlapping the top of the card */}
-            <div className="absolute left-0 top-0 aspect-square w-full overflow-hidden rounded-full bg-white shadow-[0_6px_18px_rgba(0,0,0,0.12)]">
+            <div className="absolute left-0 -top-25 aspect-square w-full overflow-hidden rounded-full bg-white shadow-[0_6px_18px_rgba(0,0,0,0.12)]">
                 {item.image ? (
                     <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
                 ) : (
@@ -77,7 +70,7 @@ function MenuCard({ item }) {
     );
 }
 
-export default function Highlights({ items = ITEMS, siteLabel = "www.example.com", title = "Menu Highlights" }) {
+export default function Highlights({ items = ITEMS, title = "Menu Highlights" }) {
     const visible = useVisibleCount();
     const [start, setStart] = useState(0);
 
@@ -90,13 +83,8 @@ export default function Highlights({ items = ITEMS, siteLabel = "www.example.com
     const slideWidth = `calc((100% - ${(visible - 1) * gap}px) / ${visible})`;
 
     return (
-        <section className="min-h-screen bg-[#eae9e6] px-4 py-10 sm:px-8">
+        <section className="min-h-screen bg-[#eae9e6] px-4 pt-30 pb-25 sm:px-8">
             <div className="mx-auto max-w-6xl">
-                <p className="text-center text-[0.95rem] text-neutral-800" style={{ fontFamily: "Roboto, sans-serif" }}>
-                    {siteLabel}
-                </p>
-
-                {/* Title with fading rules on both sides */}
                 <div className="mt-2 flex items-center gap-4 sm:gap-6">
                     <span className="h-[3px] flex-1 bg-gradient-to-r from-transparent to-black" aria-hidden="true" />
                     <h2 className="whitespace-nowrap text-3xl text-neutral-950 sm:text-5xl" style={{ fontFamily: "Philosopher, serif" }}>
