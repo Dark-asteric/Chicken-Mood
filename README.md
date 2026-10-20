@@ -1,6 +1,6 @@
 🍗 Chicken Mood
 
-A responsive restaurant website built with React, Tailwind CSS, and React Router, featuring a searchable menu, direct EmailJS-powered order processing, and table reservations.
+A responsive restaurant website built with ReactJS, Tailwind CSS, and React Router, featuring a searchable menu, direct EmailJS-powered order processing, and table reservations.
 
 ✨ Features
 

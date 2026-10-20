@@ -12,8 +12,6 @@ const LINKS = [
 
 const linkClass = ({ isActive }) => (isActive ? "text-amber-600" : "hover:text-amber-600");
 
-// Live search: filters the menu as you type. Enter / the search icon / a suggestion
-// all go to /menu?q=... (read it on the menu page with useSearchParams).
 const SearchBox = ({ className = "", onNavigate, inline = false }) => {
     const navigate = useNavigate();
     const boxRef = useRef(null);

@@ -1,4 +1,3 @@
-// Save as: src/component/page/Menu.jsx
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { CATEGORIES, MENU_ITEMS } from "../../data/menuData";

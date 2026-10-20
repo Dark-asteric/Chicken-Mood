@@ -1,7 +1,4 @@
-// Save as: src/component/page/Contacts.jsx
 import { useState } from "react";
-
-// ✏️ Fill in your real details. Anything left empty is simply not shown.
 const INFO = {
     address: "64 RUE MYRHA, 75018, PARIS",
     phone: "09.55.06.92.08",
