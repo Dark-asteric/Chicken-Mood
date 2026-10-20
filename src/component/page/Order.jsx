@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { MENU_ITEMS } from "../../data/menuData";
+import emailjs from '@emailjs/browser';
+
 if (import.meta.env.DEV) console.info(`[Order] loaded ${MENU_ITEMS.length} dishes from menuData.js`);
 
 const toNumber = (price) =>
@@ -33,6 +35,7 @@ function OrderForm({ items, item, onClose, onSubmit }) {
     });
 
     const [done, setDone] = useState(false);
+    const [isSending, setIsSending] = useState(false);
 
     const set = (key) => (e) =>
         setForm((f) => ({ ...f, [key]: e.target.value }));
@@ -43,9 +46,11 @@ function OrderForm({ items, item, onClose, onSubmit }) {
     const unitPrice = toNumber(option ? option.price : dish?.price);
     const total = dish ? unitPrice * form.quantity : 0;
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         if (!dish) return;
+
+        setIsSending(true);
 
         const orderData = {
             ...form,
@@ -55,8 +60,34 @@ function OrderForm({ items, item, onClose, onSubmit }) {
             total: Number(total.toFixed(2)),
         };
 
-        onSubmit?.(orderData);
-        setDone(true);
+        const templateParams = {
+            customer_name: form.name,
+            customer_phone: form.phone,
+            order_type: form.type.toUpperCase(),
+            delivery_address: form.type === 'delivery' ? form.address : 'N/A (Pickup)',
+            dish_name: dish.name,
+            dish_option: option?.label || 'Standard',
+            quantity: form.quantity,
+            total_price: euro(total),
+            notes: form.notes || 'No special instructions',
+        };
+
+        try {
+            await emailjs.send(
+                import.meta.env.VITE_EMAILJS_SERVICE_ID,
+                import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+                templateParams,
+                import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+            );
+
+            onSubmit?.(orderData);
+            setDone(true);
+        } catch (error) {
+            console.error("[Order] Failed to send email:", error);
+            alert("Sorry, there was an issue sending your order. Please call us directly.");
+        } finally {
+            setIsSending(false);
+        } // Fixed missing closing brace here
     };
 
     const renderDish = (i) => (
@@ -89,14 +120,7 @@ function OrderForm({ items, item, onClose, onSubmit }) {
                         aria-label="Close"
                         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-500 text-white hover:bg-neutral-700"
                     >
-                        <svg
-                            viewBox="0 0 24 24"
-                            className="h-5 w-5"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2.5"
-                            strokeLinecap="round"
-                        >
+                        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                             <path d="M6 6l12 12M18 6L6 18" />
                         </svg>
                     </button>
@@ -104,25 +128,18 @@ function OrderForm({ items, item, onClose, onSubmit }) {
 
                 {done ? (
                     <div className="mt-6 space-y-5">
-                        <p className="text-lg">
-                            Your order has been submitted successfully!
-                        </p>
-
+                        <p className="text-lg">Your order has been submitted successfully!</p>
                         <p className="text-lg">
                             {form.quantity} × <strong>{dish.name}</strong>
-                            {option?.label ? ` (${option.label})` : ""}{" "}
+                            {option?.label ? ` (${option.label})` : ""} {" "}
                             for {form.type === "pickup" ? "pickup" : "delivery"}.
                             Total <strong>{euro(total)}</strong>.
                         </p>
-
-                        <p className="text-sm">
-                            We’ll contact {form.name} on {form.phone} shortly.
-                        </p>
-
+                        <p className="text-sm">We’ll contact {form.name} on {form.phone} shortly.</p>
                         <button
                             type="button"
                             onClick={onClose}
-                            className="btn rounded-xl border-none bg-amber-600 hover:bg-amber-500"
+                            className="btn rounded-xl border-none bg-amber-600 hover:bg-amber-500 text-white py-2 px-4 mt-2"
                         >
                             Close
                         </button>
@@ -132,39 +149,19 @@ function OrderForm({ items, item, onClose, onSubmit }) {
                         <div className="grid gap-4 sm:grid-cols-2">
                             <label className="block text-sm font-medium">
                                 Name
-                                <input
-                                    required
-                                    value={form.name}
-                                    onChange={set("name")}
-                                    autoComplete="name"
-                                    className="input mt-1 w-full rounded-xl text-white"
-                                    placeholder="Your name"
-                                />
+                                <input required value={form.name} onChange={set("name")} autoComplete="name" className="input mt-1 w-full rounded-xl text-black bg-white border border-gray-300 px-3 py-2" placeholder="Your name" />
                             </label>
 
                             <label className="block text-sm font-medium">
                                 Phone
-                                <input
-                                    required
-                                    type="tel"
-                                    value={form.phone}
-                                    onChange={set("phone")}
-                                    autoComplete="tel"
-                                    className="input mt-1 w-full rounded-xl text-white"
-                                    placeholder="06 12 34 56 78"
-                                />
+                                <input required type="tel" value={form.phone} onChange={set("phone")} autoComplete="tel" className="input mt-1 w-full rounded-xl text-black bg-white border border-gray-300 px-3 py-2" placeholder="06 12 34 56 78" />
                             </label>
                         </div>
 
                         <div className="grid grid-cols-[1fr_auto] gap-4">
                             <label className="block text-sm font-medium">
-                                Dish{" "}
-                                <span className="font-normal text-neutral-500">({items.length} available)</span>
-                                <select
-                                    value={form.dish}
-                                    onChange={set("dish")}
-                                    className="select mt-1 w-full rounded-xl text-white"
-                                >
+                                Dish <span className="font-normal text-neutral-500">({items.length} available)</span>
+                                <select value={form.dish} onChange={set("dish")} className="select mt-1 w-full rounded-xl text-black bg-white border border-gray-300 px-3 py-2">
                                     {Object.entries(groupByCategory(items)).map(([category, list]) =>
                                         category ? (
                                             <optgroup key={category} label={category} className="bg-black text-white">
@@ -179,49 +176,18 @@ function OrderForm({ items, item, onClose, onSubmit }) {
 
                             <div className="text-sm font-medium">
                                 Qty
-                                <div className="mt-1 flex h-10 items-center gap-1 rounded-xl bg-white px-1">
-                                    <button
-                                        type="button"
-                                        aria-label="Decrease quantity"
-                                        onClick={() =>
-                                            setForm((f) => ({
-                                                ...f,
-                                                quantity: Math.max(1, f.quantity - 1),
-                                            }))
-                                        }
-                                        className="h-8 w-8 rounded-lg text-lg hover:bg-black/10"
-                                    >
-                                        −
-                                    </button>
-
-                                    <span className="w-6 text-center">
-                                        {form.quantity}
-                                    </span>
-
-                                    <button
-                                        type="button"
-                                        aria-label="Increase quantity"
-                                        onClick={() =>
-                                            setForm((f) => ({
-                                                ...f,
-                                                quantity: Math.min(20, f.quantity + 1),
-                                            }))
-                                        }
-                                        className="h-8 w-8 rounded-lg text-lg hover:bg-black/10"
-                                    >
-                                        +
-                                    </button>
+                                <div className="mt-1 flex h-10 items-center gap-1 rounded-xl bg-white px-1 border border-gray-300">
+                                    <button type="button" aria-label="Decrease quantity" onClick={() => setForm((f) => ({ ...f, quantity: Math.max(1, f.quantity - 1) }))} className="h-8 w-8 rounded-lg text-lg hover:bg-black/10">−</button>
+                                    <span className="w-6 text-center">{form.quantity}</span>
+                                    <button type="button" aria-label="Increase quantity" onClick={() => setForm((f) => ({ ...f, quantity: Math.min(20, f.quantity + 1) }))} className="h-8 w-8 rounded-lg text-lg hover:bg-black/10">+</button>
                                 </div>
                             </div>
                         </div>
+
                         {options.length > 0 && (
                             <label className="block text-sm font-medium">
                                 {dish.sizes ? "Size" : "Formula"}
-                                <select
-                                    value={option?.label ?? ""}
-                                    onChange={set("option")}
-                                    className="select mt-1 w-full rounded-xl text-white"
-                                >
+                                <select value={option?.label ?? ""} onChange={set("option")} className="select mt-1 w-full rounded-xl text-black bg-white border border-gray-300 px-3 py-2">
                                     {options.map((o) => (
                                         <option key={o.label} value={o.label} className="bg-black text-white">
                                             {o.label} — {o.price}
@@ -232,29 +198,10 @@ function OrderForm({ items, item, onClose, onSubmit }) {
                         )}
 
                         <fieldset className="flex gap-3">
-                            <legend className="mb-1 text-sm font-medium">
-                                Order type
-                            </legend>
-
-                            {[
-                                ["pickup", "Pickup"],
-                                ["delivery", "Delivery"],
-                            ].map(([value, label]) => (
-                                <label
-                                    key={value}
-                                    className={`flex-1 cursor-pointer rounded-xl border-2 px-4 py-2 text-center ${form.type === value
-                                        ? "border-amber-600 bg-amber-600/10"
-                                        : "border-black/20"
-                                        }`}
-                                >
-                                    <input
-                                        type="radio"
-                                        name="type"
-                                        value={value}
-                                        checked={form.type === value}
-                                        onChange={set("type")}
-                                        className="sr-only"
-                                    />
+                            <legend className="mb-1 text-sm font-medium">Order type</legend>
+                            {[["pickup", "Pickup"], ["delivery", "Delivery"]].map(([value, label]) => (
+                                <label key={value} className={`flex-1 cursor-pointer rounded-xl border-2 px-4 py-2 text-center ${form.type === value ? "border-amber-600 bg-amber-600/10" : "border-black/20"}`}>
+                                    <input type="radio" name="type" value={value} checked={form.type === value} onChange={set("type")} className="sr-only" />
                                     {label}
                                 </label>
                             ))}
@@ -263,38 +210,23 @@ function OrderForm({ items, item, onClose, onSubmit }) {
                         {form.type === "delivery" && (
                             <label className="block text-sm font-medium">
                                 Delivery address
-                                <input
-                                    required
-                                    value={form.address}
-                                    onChange={set("address")}
-                                    autoComplete="street-address"
-                                    className="input mt-1 w-full rounded-xl text-white"
-                                    placeholder="Street, city"
-                                />
+                                <input required value={form.address} onChange={set("address")} autoComplete="street-address" className="input mt-1 w-full rounded-xl text-black bg-white border border-gray-300 px-3 py-2" placeholder="Street, city" />
                             </label>
                         )}
 
                         <label className="block text-sm font-medium">
                             Notes (optional)
-                            <textarea
-                                value={form.notes}
-                                onChange={set("notes")}
-                                rows={2}
-                                className="textarea mt-1 w-full rounded-xl text-white"
-                                placeholder="No onions, extra sauce…"
-                            />
+                            <textarea value={form.notes} onChange={set("notes")} rows={2} className="textarea mt-1 w-full rounded-xl text-black bg-white border border-gray-300 px-3 py-2" placeholder="No onions, extra sauce…" />
                         </label>
 
                         <div className="flex items-center justify-between border-t-2 border-black pt-4">
-                            <p className="text-xl font-bold">
-                                Total {euro(total)}
-                            </p>
-
+                            <p className="text-xl font-bold">Total {euro(total)}</p>
                             <button
                                 type="submit"
-                                className="btn rounded-xl border-none bg-amber-600 hover:bg-amber-500"
+                                disabled={isSending}
+                                className="btn rounded-xl border-none bg-amber-600 hover:bg-amber-500 text-white py-2 px-6 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
                             >
-                                Confirm order
+                                {isSending ? "Processing..." : "Confirm order"}
                             </button>
                         </div>
                     </form>
@@ -303,12 +235,8 @@ function OrderForm({ items, item, onClose, onSubmit }) {
         </div>
     );
 }
-const Order = ({
-    open,
-    onClose,
-    item,
-    onSubmit,
-}) => {
+
+const Order = ({ open, onClose, item, onSubmit }) => {
     const items = MENU_ITEMS;
     useEffect(() => {
         if (!open) return;
@@ -328,12 +256,7 @@ const Order = ({
     }, [open, onClose]);
 
     return open ? (
-        <OrderForm
-            items={items}
-            item={item}
-            onClose={onClose}
-            onSubmit={onSubmit}
-        />
+        <OrderForm items={items} item={item} onClose={onClose} onSubmit={onSubmit} />
     ) : null;
 };
 
