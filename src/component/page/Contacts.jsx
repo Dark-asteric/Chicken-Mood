@@ -1,12 +1,8 @@
+// Save as: src/component/page/Contacts.jsx
 import { useState } from "react";
-const INFO = {
-    address: "64 RUE MYRHA, 75018, PARIS",
-    phone: "09.55.06.92.08",
-    email: "mishafi6969@gmail.com",
-    hours: ["Mon-Sun : 11H-00H00"],
-};
+import { INFO } from "../../data/siteInfo";
+import { postJson } from "../../utils/api";
 
-const API_URL = import.meta.env.VITE_API_URL ?? "";
 const font = { fontFamily: "Roboto, sans-serif" };
 const serif = { fontFamily: "Philosopher, serif" };
 const fieldClass = "mt-1 w-full rounded-xl";
@@ -27,6 +23,11 @@ const Contacts = () => {
     const [error, setError] = useState("");
     const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
+    // Free keyless Google Maps embed + directions link, built from the address in siteInfo.js
+    const mapQuery = encodeURIComponent(INFO.address);
+    const mapSrc = `https://www.google.com/maps?q=${mapQuery}&output=embed`;
+    const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${mapQuery}`;
+
     const hasInfo = INFO.address || INFO.phone || INFO.email || INFO.hours.length > 0;
 
     const handleSubmit = async (e) => {
@@ -34,16 +35,11 @@ const Contacts = () => {
         setError("");
         setStatus("sending");
         try {
-            const res = await fetch(`${API_URL}/api/contact`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(form),
-            });
-            if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Request failed");
+            await postJson("/api/contact", form);
             setForm({ name: "", email: "", message: "" });
             setStatus("done");
         } catch (err) {
-            setError(err.message === "Failed to fetch" ? "Cannot reach the server. Please try again." : err.message);
+            setError(err.message);
             setStatus("idle");
         }
     };
@@ -53,7 +49,7 @@ const Contacts = () => {
             <div className="mx-auto max-w-6xl">
                 <div className="flex items-center gap-4 sm:gap-6">
                     <span className="h-[3px] flex-1 bg-linear-to-r from-transparent to-black" aria-hidden="true" />
-                    <h1 className="whitespace-nowrap text-3xl text-neutral-950 sm:text-5xl" style={serif}>Contact <span className="text-amber-500">Us</span></h1>
+                    <h1 className="whitespace-nowrap text-3xl text-neutral-950 sm:text-5xl" style={serif}>Contact Us</h1>
                     <span className="h-[3px] flex-1 bg-linear-to-l from-transparent to-black" aria-hidden="true" />
                 </div>
                 <p className="mx-auto mt-6 max-w-xl text-center text-lg text-neutral-700" style={font}>
@@ -104,15 +100,15 @@ const Contacts = () => {
                             <form onSubmit={handleSubmit} className="space-y-4" style={font}>
                                 <label className="block text-sm font-medium">
                                     Name
-                                    <input required maxLength={80} value={form.name} onChange={set("name")} className={`input ${fieldClass} text-white`}  placeholder="Your name" autoComplete="name" />
+                                    <input required maxLength={80} value={form.name} onChange={set("name")} className={`input ${fieldClass} text-white`} placeholder="Your name" autoComplete="name" />
                                 </label>
                                 <label className="block text-sm font-medium">
                                     Email
-                                        <input required type="email" maxLength={120} value={form.email} onChange={set("email")} className={`input ${fieldClass} text-white`} placeholder="you@example.com" autoComplete="email" />
+                                        <input required type="email" maxLength={120} value={form.email} onChange={set("email")} className={`text-white input ${fieldClass}`} placeholder="you@example.com" autoComplete="email" />
                                 </label>
                                 <label className="block text-sm font-medium">
                                     Message
-                                    <textarea required minLength={10} maxLength={1000} rows={5} value={form.message} onChange={set("message")} className={`textarea ${fieldClass} text-white`} placeholder="How can we help?" />
+                                        <textarea required minLength={10} maxLength={1000} rows={5} value={form.message} onChange={set("message")} className={`textarea ${fieldClass} text-white`} placeholder="How can we help?" />
                                 </label>
 
                                 {error && <p role="alert" className="rounded-xl bg-red-100 px-4 py-2 text-sm text-red-800">{error}</p>}
@@ -124,6 +120,33 @@ const Contacts = () => {
                         )}
                     </div>
                 </div>
+
+                {/* Map (only when an address is set in siteInfo.js) */}
+                {INFO.address && (
+                    <div className="mt-12">
+                        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                            <h2 className="text-2xl text-neutral-950 sm:text-3xl" style={serif}>Find us</h2>
+                            <a
+                                href={directionsUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="btn rounded-xl border-none bg-amber-600 text-white hover:bg-amber-500"
+                            >
+                                Get directions
+                            </a>
+                        </div>
+                        <div className="overflow-hidden rounded-3xl bg-[#e0dfdb] shadow-md">
+                            <iframe
+                                title={`Map showing ${INFO.address}`}
+                                src={mapSrc}
+                                loading="lazy"
+                                referrerPolicy="no-referrer-when-downgrade"
+                                allowFullScreen
+                                className="h-80 w-full border-0 sm:h-96 lg:h-[28rem]"
+                            />
+                        </div>
+                    </div>
+                )}
             </div>
         </section>
     );
