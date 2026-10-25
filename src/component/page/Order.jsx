@@ -4,9 +4,6 @@ import emailjs from '@emailjs/browser';
 
 if (import.meta.env.DEV) console.info(`[Order] loaded ${MENU_ITEMS.length} dishes from menuData.js`);
 
-// ---- "Compose" dishes (Tacos, Bowl): meat + sauce choices ----
-// MEATS and SAUCES come from menuData.js. The number of meats is read from the
-// selected size label ("M – 1 viande", "XL – 3 viandes"); sauces are capped by MAX_SAUCES.
 const MAX_SAUCES = 2;
 const MAX_QTY = 20;
 const SAUCE_NAMES = SAUCES.map((sauce) => sauce.name);
@@ -14,6 +11,9 @@ const SPICY_SAUCES = new Set(SAUCES.filter((sauce) => sauce.spicy).map((sauce) =
 
 const isComposable = (dish) => dish?.compose === true || dish?.category === "Compose";
 const meatsAllowed = (option) => Number(/(\d+)\s*viande/i.exec(option?.label ?? "")?.[1]) || 1;
+
+const cleanPhone = (raw) => raw.replace(/\D/g, "").slice(0, 15);
+const isValidPhone = (phone) => /^\d{8,15}$/.test(phone);
 
 const toNumber = (price) =>
     parseFloat(String(price).replace(/[^0-9.,]/g, "").replace(",", ".")) || 0;
@@ -33,14 +33,12 @@ const groupByCategory = (items) =>
         return groups;
     }, {});
 
-// ["Lardons", "Lardons", "Merguez"] -> "2× Lardons, Merguez"
 const summarize = (list) => {
     const counts = new Map();
     list.forEach((name) => counts.set(name, (counts.get(name) ?? 0) + 1));
     return [...counts].map(([name, n]) => (n > 1 ? `${n}× ${name}` : name)).join(", ");
 };
 
-// One line of the order -> readable text
 const compositionOf = (line) =>
     line.meats.length ? `Meat: ${summarize(line.meats)} | Sauce: ${summarize(line.sauces)}` : "";
 const lineTotalOf = (line) => line.unitPrice * line.quantity;
@@ -100,7 +98,6 @@ const ChoiceGroup = ({ legend, choices, selected, max, onAdd, onRemove, spicy = 
 };
 
 function OrderForm({ items, item, onClose, onSubmit }) {
-    // Customer details
     const [customer, setCustomer] = useState({
         name: "",
         phone: "",
@@ -109,7 +106,6 @@ function OrderForm({ items, item, onClose, onSubmit }) {
         notes: "",
     });
 
-    // The dish currently being configured, and the dishes already added to the order
     const [pick, setPick] = useState({
         dish: item?.name ?? items[0]?.name ?? "",
         option: "",
@@ -121,16 +117,19 @@ function OrderForm({ items, item, onClose, onSubmit }) {
     const nextId = useRef(0);
 
     const [done, setDone] = useState(false);
-    const [submitted, setSubmitted] = useState(null); // { lines, total } shown on the thank-you screen
+    const [submitted, setSubmitted] = useState(null); 
     const [isSending, setIsSending] = useState(false);
     const [error, setError] = useState("");
 
     const setField = (key) => (e) =>
         setCustomer((c) => ({ ...c, [key]: e.target.value }));
+    const setPhone = (e) => {
+        const value = cleanPhone(e.target.value);
+        setCustomer((c) => ({ ...c, phone: value }));
+    };
     const setOption = (e) => setPick((p) => ({ ...p, option: e.target.value }));
     const setDish = (e) => setPick((p) => ({ ...p, dish: e.target.value, option: "" }));
 
-    // Derived values for the dish being configured
     const dish = items.find((i) => i.name === pick.dish) ?? items[0];
     const options = optionsOf(dish);
     const option = options.find((o) => o.label === pick.option) ?? options[0];
@@ -141,7 +140,6 @@ function OrderForm({ items, item, onClose, onSubmit }) {
     const chosenMeats = composable ? pick.meats.filter((m) => MEATS.includes(m)).slice(0, maxMeats) : [];
     const chosenSauces = composable ? pick.sauces.filter((s) => SAUCE_NAMES.includes(s)).slice(0, MAX_SAUCES) : [];
 
-    // The same meat or sauce can be added more than once, up to the limit
     const addChoice = (key, value, selected, max) =>
         setPick((p) => (selected.length >= max ? p : { ...p, [key]: [...selected, value] }));
 
@@ -151,8 +149,6 @@ function OrderForm({ items, item, onClose, onSubmit }) {
             if (index === -1) return p;
             return { ...p, [key]: selected.filter((_, i) => i !== index) };
         });
-
-    // Checks the dish being configured and turns it into an order line
     const buildLine = () => {
         if (!dish) return { problem: "Please choose a dish." };
         if (composable && chosenMeats.length === 0) return { problem: "Please choose at least one meat." };
@@ -185,12 +181,16 @@ function OrderForm({ items, item, onClose, onSubmit }) {
 
     const cartTotal = cart.reduce((sum, line) => sum + lineTotalOf(line), 0);
     const cartCount = cart.reduce((sum, line) => sum + line.quantity, 0);
-    // With an empty order, the dish being configured counts as the order
     const displayedTotal = cart.length ? cartTotal : unitPrice * pick.quantity;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
+
+        if (!isValidPhone(customer.phone)) {
+            setError("Please enter a valid phone number using digits only (8 to 15 digits), e.g. 0612345678.");
+            return;
+        }
 
         let lines = cart;
         if (lines.length === 0) {
@@ -233,8 +233,6 @@ function OrderForm({ items, item, onClose, onSubmit }) {
             customer_phone: customer.phone,
             order_type: customer.type.toUpperCase(),
             delivery_address: customer.type === 'delivery' ? customer.address : 'N/A (Pickup)',
-            // One line per dish. dish_name carries the same text (separated by " | ")
-            // so a template that only uses {{dish_name}} still shows the whole order.
             order_items: itemLines.join("\n"),
             dish_name: itemLines.join(" | "),
             dish_option: lines.length === 1 ? (lines[0].optionLabel || 'Standard') : 'See items',
@@ -250,7 +248,6 @@ function OrderForm({ items, item, onClose, onSubmit }) {
             setSubmitted({ lines, total });
             setDone(true);
         } catch (err) {
-            // EmailJS errors look like { status: 422, text: "The recipient's address is empty" }
             console.error("[Order] Failed to send email:", err?.status, err?.text, err);
             setError("Sorry, there was an issue sending your order. Please call us directly.");
         } finally {
@@ -328,11 +325,9 @@ function OrderForm({ items, item, onClose, onSubmit }) {
 
                             <label className="block text-sm font-medium">
                                 Phone
-                                <input required type="tel" value={customer.phone} onChange={setField("phone")} autoComplete="tel" className="input mt-1 w-full rounded-xl text-black bg-white border border-gray-300 px-3 py-2" placeholder="06 12 34 56 78" />
+                                <input required type="tel" inputMode="numeric" maxLength={15} pattern="\d{8,15}" title="Digits only, 8 to 15 digits" value={customer.phone} onChange={setPhone} autoComplete="tel" className="input mt-1 w-full rounded-xl text-black bg-white border border-gray-300 px-3 py-2" placeholder="0612345678" />
                             </label>
                         </div>
-
-                        {/* ---- Add a dish ---- */}
                         <div className="space-y-4 rounded-2xl border-2 border-black/10 bg-white/50 p-4">
                             <p className="text-sm font-semibold">Add a dish</p>
 
@@ -405,8 +400,6 @@ function OrderForm({ items, item, onClose, onSubmit }) {
                                 Add to order · {euro(unitPrice * pick.quantity)}
                             </button>
                         </div>
-
-                        {/* ---- Dishes already in the order ---- */}
                         <div>
                             <p className="mb-1 text-sm font-medium">
                                 Your order{" "}
