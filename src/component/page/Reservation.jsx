@@ -162,8 +162,8 @@ const Reservation = () => {
                             </div>
 
                             <label className="block text-sm font-medium">
-                                Email (optional)
-                                <input type="email" maxLength={120} value={form.email} onChange={set("email")} className={`text-black bg-white border border-gray-300 px-3 py-2 input ${fieldClass}`} placeholder="you@example.com" autoComplete="email" />
+                                Email
+                                <input required type="email" maxLength={120} value={form.email} onChange={set("email")} className={`text-black bg-white border border-gray-300 px-3 py-2 input ${fieldClass}`} placeholder="you@example.com" autoComplete="email" />
                             </label>
 
                             <div className="grid gap-4 sm:grid-cols-3">
