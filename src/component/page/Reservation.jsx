@@ -91,6 +91,7 @@ const Reservation = () => {
                 templateId: !!templateId,
                 publicKey: !!publicKey,
             });
+            console.log(serviceId,templateId,publicKey)
             setError("Reservation service is not configured. Please call us directly.");
             return;
         }

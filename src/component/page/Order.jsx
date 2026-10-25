@@ -36,6 +36,7 @@ function OrderForm({ items, item, onClose, onSubmit }) {
 
     const [done, setDone] = useState(false);
     const [isSending, setIsSending] = useState(false);
+    const [error, setError] = useState("");
 
     const set = (key) => (e) =>
         setForm((f) => ({ ...f, [key]: e.target.value }));
@@ -49,6 +50,22 @@ function OrderForm({ items, item, onClose, onSubmit }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!dish) return;
+
+        setError("");
+
+        const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+        const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+        const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+
+        if (!serviceId || !templateId || !publicKey) {
+            console.error("[Order] Missing EmailJS env vars:", {
+                serviceId: !!serviceId,
+                templateId: !!templateId,
+                publicKey: !!publicKey,
+            });
+            setError("Online ordering is not configured yet. Please call us directly.");
+            return;
+        }
 
         setIsSending(true);
 
@@ -73,21 +90,16 @@ function OrderForm({ items, item, onClose, onSubmit }) {
         };
 
         try {
-            await emailjs.send(
-                import.meta.env.VITE_EMAILJS_SERVICE_ID,
-                import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
-                templateParams,
-                import.meta.env.VITE_EMAILJS_PUBLIC_KEY
-            );
+            await emailjs.send(serviceId, templateId, templateParams, { publicKey });
 
             onSubmit?.(orderData);
             setDone(true);
-        } catch (error) {
-            console.error("[Order] Failed to send email:", error);
-            alert("Sorry, there was an issue sending your order. Please call us directly.");
+        } catch (err) {
+            console.error("[Order] Failed to send email:", err?.status, err?.text, err);
+            setError("Sorry, there was an issue sending your order. Please call us directly.");
         } finally {
             setIsSending(false);
-        } // Fixed missing closing brace here
+        }
     };
 
     const renderDish = (i) => (
@@ -218,6 +230,8 @@ function OrderForm({ items, item, onClose, onSubmit }) {
                             Notes (optional)
                             <textarea value={form.notes} onChange={set("notes")} rows={2} className="textarea mt-1 w-full rounded-xl text-black bg-white border border-gray-300 px-3 py-2" placeholder="No onions, extra sauce…" />
                         </label>
+
+                        {error && <p role="alert" className="rounded-xl bg-red-100 px-4 py-2 text-sm text-red-800">{error}</p>}
 
                         <div className="flex items-center justify-between border-t-2 border-black pt-4">
                             <p className="text-xl font-bold">Total {euro(total)}</p>
