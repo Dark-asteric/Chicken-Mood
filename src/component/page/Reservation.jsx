@@ -24,16 +24,10 @@ const maskDate = (raw) => {
     return [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4, 8)].filter(Boolean).join("-");
 };
 
-const cleanPhone = (raw) => {
-    const plus = raw.trimStart().startsWith("+") ? "+" : "";
-    const body = raw.replace(/[^\d ]/g, "").replace(/\s{2,}/g, " ").replace(/^ /, "");
-    return (plus + body).slice(0, 20);
-};
+// Phone: digits only (no spaces, letters or symbols), max 15 digits
+const cleanPhone = (raw) => raw.replace(/\D/g, "").slice(0, 15);
 
-const isValidPhone = (phone) => {
-    const digits = phone.replace(/\D/g, "").length;
-    return /^\+?[\d ]+$/.test(phone) && digits >= 8 && digits <= 15;
-};
+const isValidPhone = (phone) => /^\d{8,15}$/.test(phone);
 
 const parseDate = (text) => {
     const m = /^(\d{2})-(\d{2})-(\d{4})$/.exec(text);
@@ -69,7 +63,7 @@ const Reservation = () => {
         setError("");
 
         if (!isValidPhone(form.phone)) {
-            setError("Please enter a valid phone number with 8 to 15 digits, e.g. 06 12 34 56 78 or +33 6 12 34 56 78.");
+            setError("Please enter a valid phone number using digits only (8 to 15 digits), e.g. 0612345678.");
             return;
         }
 
@@ -91,14 +85,13 @@ const Reservation = () => {
                 templateId: !!templateId,
                 publicKey: !!publicKey,
             });
-            console.log(serviceId,templateId,publicKey)
             setError("Reservation service is not configured. Please call us directly.");
             return;
         }
 
         setStatus("sending");
 
-        const formattedDate = form.date; 
+        const formattedDate = form.date;
 
         const templateParams = {
             customer_name: form.name,
@@ -158,7 +151,7 @@ const Reservation = () => {
                                 </label>
                                 <label className="block text-sm font-medium">
                                     Phone
-                                    <input required type="tel" inputMode="tel" maxLength={20} value={form.phone} onChange={setPhone} className={`text-black bg-white border border-gray-300 px-3 py-2 input ${fieldClass}`} placeholder="06 12 34 56 78" autoComplete="tel" />
+                                    <input required type="tel" inputMode="numeric" maxLength={15} pattern="\d{8,15}" title="Digits only, 8 to 15 digits" value={form.phone} onChange={setPhone} className={`text-black bg-white border border-gray-300 px-3 py-2 input ${fieldClass}`} placeholder="0612345678" autoComplete="tel" />
                                 </label>
                             </div>
 
